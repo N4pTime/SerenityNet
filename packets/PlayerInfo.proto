@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package PlayerInfo;
+
+message Character
+{
+	int32 id = 1;
+	string username = 2;
+	repeated float position  = 3 [packed=true];
+	repeated float direction = 4 [packed=true];
+}
