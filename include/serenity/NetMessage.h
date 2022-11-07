@@ -27,8 +27,21 @@ namespace serenity
 
 		struct message 
 		{
+			typedef std::shared_ptr<message> ptr;
+
 			message_header header{};
 			std::vector<uint8_t> body;
+
+			void setID(int idx)
+			{
+				header.id = idx;
+			}
+
+			void bufferData(uint8_t* data, size_t size)
+			{
+				header.size = (uint32_t)size;
+				body.assign(data, data + size);
+			}
 
 			// returns size of the message in bytes
 			size_t size() const;
@@ -110,17 +123,18 @@ namespace serenity
 		// Forward declare the connection
 		class connection;
 
-		struct owned_message
+		struct owned_message : message
 		{
+			typedef std::shared_ptr<owned_message> ptr;
+
 			std::shared_ptr<connection> remote = nullptr;
-			message msg;
 
 			// override for std::cout, show description of message
-			friend std::ostream& operator << (std::ostream& os, const owned_message& msg)
+			/*friend std::ostream& operator << (std::ostream& os, const owned_message& msg)
 			{
 				os << msg.msg;
 				return os;
-			}
+			}*/
 		};
 	}
 }

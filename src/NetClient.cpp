@@ -1,7 +1,7 @@
 #include <serenity/NetClient.h>
 #include <serenity/NetConnection.h>
 
-serenity::net::client_interface::client_interface() : m_qMessagesIn(new tsqueue<owned_message>())
+serenity::net::client_interface::client_interface() : m_qMessagesIn(new tsqueue<owned_message::ptr>())
 {}
 
 serenity::net::client_interface::~client_interface()
@@ -67,6 +67,8 @@ void serenity::net::client_interface::Disconnect()
 {
 	bool bIsConnected = IsConnected();
 
+	OnDisconnected();
+
 	if (bIsConnected)
 		m_connection->Disconnect();
 
@@ -88,7 +90,7 @@ bool serenity::net::client_interface::IsConnected()
 }
 
 
-serenity::net::tsqueue<serenity::net::owned_message>& serenity::net::client_interface::IncomingMessages()
+serenity::net::tsqueue<serenity::net::owned_message::ptr>& serenity::net::client_interface::IncomingMessages()
 {
 	return *m_qMessagesIn;
 }
@@ -102,19 +104,23 @@ void serenity::net::client_interface::Update(size_t nMaxMessages, bool bWait)
 	{
 		auto msg = m_qMessagesIn->pop_front();
 
-		OnMessage(msg.msg);
+		OnMessage(msg);
 		nMessagesCount++;
 	}
 }
 
-void serenity::net::client_interface::OnMessage(message& msg)
+void serenity::net::client_interface::OnMessage(message::ptr msg)
+{
+
+}
+
+void serenity::net::client_interface::OnDisconnected()
 {
 
 }
 
 // Send message to server
-
-void serenity::net::client_interface::Send(const message& msg)
+void serenity::net::client_interface::Send(message::ptr msg)
 {
 	if (bool res = IsConnected())
 		m_connection->Send(msg);

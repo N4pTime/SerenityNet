@@ -81,6 +81,11 @@ namespace serenity
 				return t;
 			}
 
+			void erase(const T& item)
+			{
+				
+			}
+
 			void wait()
 			{
 				std::unique_lock<std::mutex> ul(mtxBlocking);

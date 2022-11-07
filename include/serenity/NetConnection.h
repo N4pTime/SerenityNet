@@ -24,7 +24,7 @@ namespace serenity
 				CONNECTED,
 			};
 
-			connection(owner parent, asio::io_context& context, asio::ip::tcp::socket socket, tsqueue<owned_message>& qIn);
+			connection(owner parent, asio::io_context& context, asio::ip::tcp::socket socket, tsqueue<owned_message::ptr>& qIn);
 			virtual ~connection();
 
 			uint32_t GetID() const;
@@ -41,11 +41,14 @@ namespace serenity
 
 		public:
 
-			void Send(const message& msg);
+			void Send(const message::ptr& msg);
+
+			uint32_t nExternalState = -1;
+			std::any pMetaData; // for association with some external data
 
 		protected:
 
-			message m_msgTempIn;
+			owned_message m_msgTempIn;
 
 			// ASYNC - 
 			void ReadHeader();
@@ -61,10 +64,10 @@ namespace serenity
 			asio::io_context& m_context;
 
 			// single at every connection
-			tsqueue<message> m_qMessagesOut;
+			tsqueue<message::ptr> m_qMessagesOut;
 
 			// all incoming messages in one heap
-			tsqueue<owned_message>& m_qMessagesIn;
+			tsqueue<owned_message::ptr>& m_qMessagesIn;
 
 			owner m_nOwnerType = owner::server;
 			uint32_t id = 0;

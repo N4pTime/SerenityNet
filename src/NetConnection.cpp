@@ -1,7 +1,7 @@
 #include <serenity/NetConnection.h>
 
 serenity::net::connection::connection(owner parent, asio::io_context& context,
-	asio::ip::tcp::socket socket, tsqueue<owned_message>& qIn)
+	asio::ip::tcp::socket socket, tsqueue<owned_message::ptr>& qIn)
 		: m_context(context), m_socket(std::move(socket)), m_qMessagesIn(qIn)
 {
 	m_nOwnerType = parent;
@@ -80,7 +80,7 @@ bool serenity::net::connection::IsConnected() const
 // 
 
 
-void serenity::net::connection::Send(const message& msg)
+void serenity::net::connection::Send(const message::ptr& msg)
 {
 	asio::post(m_context,
 		[this, msg]()
@@ -149,12 +149,14 @@ void serenity::net::connection::ReadBody()
 
 void serenity::net::connection::WriteHeader()
 {
-	asio::async_write(m_socket, asio::buffer(&m_qMessagesOut.front().header, sizeof(message_header)),
+	const auto mMsgOut = m_qMessagesOut.front();
+
+	asio::async_write(m_socket, asio::buffer(&mMsgOut->header, sizeof(message_header)),
 		[this, self = shared_from_this()](asio::error_code ec, std::size_t length)
 		{
 			if (!ec)
 			{
-				if (m_qMessagesOut.front().body.size() > 0)
+				if (m_qMessagesOut.front()->body.size() > 0)
 				{
 					WriteBody();
 				}
@@ -180,7 +182,7 @@ void serenity::net::connection::WriteHeader()
 
 void serenity::net::connection::WriteBody()
 {
-	asio::async_write(m_socket, asio::buffer(m_qMessagesOut.front().body.data(), m_qMessagesOut.front().body.size()),
+	asio::async_write(m_socket, asio::buffer(m_qMessagesOut.front()->body.data(), m_qMessagesOut.front()->body.size()),
 		[this, self = shared_from_this()](asio::error_code ec, std::size_t length)
 		{
 			if (!ec)
@@ -204,9 +206,11 @@ void serenity::net::connection::WriteBody()
 void serenity::net::connection::AddToIncomingMessageQueue()
 {
 	if (m_nOwnerType == owner::server)
-		m_qMessagesIn.push_back({ this->shared_from_this(), m_msgTempIn });
+		m_msgTempIn.remote = this->shared_from_this();
 	else
-		m_qMessagesIn.push_back({ nullptr, m_msgTempIn });
+		m_msgTempIn.remote = nullptr;
+
+	m_qMessagesIn.push_back(std::make_shared<owned_message>(m_msgTempIn));
 
 	// continue to read
 	ReadHeader();

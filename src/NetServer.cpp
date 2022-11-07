@@ -2,7 +2,10 @@
 #include <serenity/NetConnection.h>
 
 serenity::net::server_interface::server_interface(uint16_t port)
-	: m_acceptor(m_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {}
+	: m_acceptor(m_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) 
+{
+	
+}
 
 serenity::net::server_interface::~server_interface()
 {
@@ -13,6 +16,8 @@ bool serenity::net::server_interface::Start()
 {
 	try
 	{
+		OnInit();
+
 		WaitForClientConnection();
 
 		m_thrContext = std::thread([this]() { m_context.run(); });
@@ -79,7 +84,7 @@ void serenity::net::server_interface::WaitForClientConnection()
 	);
 }
 
-void serenity::net::server_interface::MessageClient(std::shared_ptr<connection> client, const message& msg)
+void serenity::net::server_interface::MessageClient(std::shared_ptr<connection> client, const message::ptr& msg)
 {
 	if (client && client->IsConnected())
 	{
@@ -94,7 +99,7 @@ void serenity::net::server_interface::MessageClient(std::shared_ptr<connection> 
 	}
 }
 
-void serenity::net::server_interface::MessageAllClients(const message& msg, std::shared_ptr<connection> ignoreClient)
+void serenity::net::server_interface::MessageAllClients(message::ptr msg, std::shared_ptr<connection> ignoreClient)
 {
 	bool bInvalidClientExist = false;
 
@@ -117,6 +122,8 @@ void serenity::net::server_interface::MessageAllClients(const message& msg, std:
 	{
 		m_deqConnections.erase(
 			std::remove(m_deqConnections.begin(), m_deqConnections.end(), nullptr), m_deqConnections.end());
+
+		std::cout << "Num of connections: " << m_deqConnections.size() << std::endl;
 	}
 }
 
@@ -129,12 +136,19 @@ void serenity::net::server_interface::Update(size_t nMaxMessages, bool bWait)
 	{
 		auto msg = m_qMessagesIn.pop_front();
 
-		OnMessage(msg.remote, msg.msg);
+		OnMessage(msg->remote, msg);
 		nMessagesCount++;
 	}
 }
 
+void serenity::net::server_interface::Computate() {}
+
 // Handlers
+
+void serenity::net::server_interface::OnInit()
+{
+
+}
 
 bool serenity::net::server_interface::OnClientConnect(std::shared_ptr<connection> client)
 {
@@ -146,7 +160,7 @@ void serenity::net::server_interface::OnClientDisconnect(std::shared_ptr<connect
 
 }
 
-void serenity::net::server_interface::OnMessage(std::shared_ptr<connection> client, message& msg)
+void serenity::net::server_interface::OnMessage(std::shared_ptr<connection> client, message::ptr msg)
 {
 
 }

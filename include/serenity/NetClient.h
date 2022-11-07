@@ -24,17 +24,21 @@ namespace serenity
 			void Disconnect();
 			bool IsConnected();
 
+		public:
+
 			// Update for receiving incoming messages from server
 			void Update(size_t nMaxMessages = -1, bool bWait = false);
 
-			virtual void OnMessage(message& msg);
-
-		public:
-
 			// Send message to server
-			void Send(const message& msg);
+			void Send(message::ptr msg);
 
-			tsqueue<owned_message>& IncomingMessages();
+			tsqueue<owned_message::ptr>& IncomingMessages();
+
+		protected:
+
+			virtual void OnMessage(message::ptr msg);
+
+			virtual void OnDisconnected(); // example: send message about disconnecting
 
 		protected:
 			// handle asio work
@@ -50,7 +54,7 @@ namespace serenity
 		private:
 
 			// Thread safe queue of server incoming messages
-			tsqueue<owned_message>* m_qMessagesIn;
+			tsqueue<owned_message::ptr>* m_qMessagesIn;
 
 			enum class ErrorFlag {
 				Log,

@@ -19,25 +19,30 @@ namespace serenity
 
 			// ASYNC - instruct asio to wait connections
 			void WaitForClientConnection();
-			void MessageClient(std::shared_ptr<connection> client, const message& msg);
-			void MessageAllClients(const message& msg, std::shared_ptr<connection> ignoreClient = nullptr);
+			void MessageClient(std::shared_ptr<connection> client, const message::ptr& msg);
+			void MessageAllClients(message::ptr msg, std::shared_ptr<connection> ignoreClient = nullptr);
 
 			void Update(size_t nMaxMessages = -1, bool bWait = false);
+
+			virtual void Computate();
 
 			size_t GetNumClients();
 
 		protected:
 
+			virtual void OnInit();
 			virtual bool OnClientConnect(std::shared_ptr<connection> client);
 			virtual void OnClientDisconnect(std::shared_ptr<connection> client);
-			virtual void OnMessage(std::shared_ptr<connection> client, message& msg);
+			virtual void OnMessage(std::shared_ptr<connection> client, message::ptr msg);
+
+			std::deque<std::shared_ptr<connection>> m_deqConnections;
 
 		private:
 			
 			// income message packets
-			tsqueue<owned_message> m_qMessagesIn;
+			tsqueue<owned_message::ptr> m_qMessagesIn;
 
-			std::deque<std::shared_ptr<connection>> m_deqConnections;
+			
 
 			// asio staff
 			asio::io_context m_context;
